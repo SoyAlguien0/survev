@@ -23,6 +23,7 @@ import type { ThrowableDef } from "../../../../shared/defs/gameObjects/throwable
 import {
     type Action,
     type Anim,
+    DamageType,
     EmoteSlot,
     GameConfig,
     type HasteType,
@@ -48,6 +49,7 @@ import { BaseGameObject, type DamageParams, type GameObject } from "./gameObject
 import type { Loot } from "./loot";
 import type { MapIndicator } from "./mapIndicator";
 import type { Obstacle } from "./obstacle";
+import { Projectile } from "./projectile";
 import type { Structure } from "./structure";
 
 type GodMode = {
@@ -2640,6 +2642,7 @@ export class Player extends BaseGameObject {
         }
     }
 
+    hitBy: Player | undefined;
     killedBy: Player | undefined;
     killedIds: number[] = [];
 
@@ -2690,11 +2693,10 @@ export class Player extends BaseGameObject {
         killMsg.targetId = this.__id;
         killMsg.killed = true;
 
-        if (params.source instanceof Player) {
+        if (params.source instanceof Player && params.source !== this) {
             const source = params.source;
             this.killedBy = source;
-
-            if (source !== this && source.teamId !== this.teamId) {
+            if (source.teamId !== this.teamId) {
                 source.killedIds.push(this.matchDataId);
                 source.kills++;
 
@@ -2716,6 +2718,20 @@ export class Player extends BaseGameObject {
             killMsg.killCreditId = source.__id;
             killMsg.killerKills = source.kills;
         }
+        else if(this.hitBy != null && 
+            ((params.source instanceof Player && params.source !== this) || 
+            (params.damageType == (DamageType.Gas || DamageType.Airdrop || DamageType.Airstrike)))) {
+            const source = this.hitBy!;
+            this.killedBy = source;
+
+            source.killedIds.push(this.matchDataId);
+            source.kills++;
+
+            killMsg.killerId = source.__id;
+            killMsg.killCreditId = source.__id;
+            killMsg.killerKills = source.kills;
+        }
+       
 
         if (this.hasPerk("final_bugle")) {
             this.initLastBreath();
