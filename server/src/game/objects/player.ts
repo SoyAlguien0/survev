@@ -2628,8 +2628,18 @@ export class Player extends BaseGameObject {
         downedMsg.targetId = this.__id;
         downedMsg.downed = true;
 
-        if (params.source instanceof Player) {
+        if (this.hitBy != null && 
+        ((params.source instanceof Player && params.source === this) || 
+        [DamageType.Gas, DamageType.Airdrop, DamageType.Airstrike].includes(params.damageType))) {
+            const source = this.hitBy!;
+            this.downedBy = source;
+                
+            downedMsg.killerId = source.__id;
+            downedMsg.killCreditId = params.damageType == DamageType.Player? source.__id : params.damageType;
+        }
+        else if (params.source instanceof Player) {
             this.downedBy = params.source;
+
             downedMsg.killerId = params.source.__id;
             downedMsg.killCreditId = params.source.__id;
         }
@@ -2693,10 +2703,22 @@ export class Player extends BaseGameObject {
         killMsg.targetId = this.__id;
         killMsg.killed = true;
 
-        if (params.source instanceof Player && params.source !== this) {
+        if (this.hitBy != null && 
+        ((params.source instanceof Player && params.source === this) || 
+        [DamageType.Gas, DamageType.Airdrop, DamageType.Airstrike].includes(params.damageType))) {
+            const source = this.hitBy!;
+            this.killedBy = source;
+                
+            source.killedIds.push(this.matchDataId);
+            source.kills++;
+            killMsg.killerId = source.__id;
+            killMsg.killerKills = source.kills;
+            killMsg.killCreditId = params.damageType;
+
+        } else if (params.source instanceof Player) {
             const source = params.source;
             this.killedBy = source;
-            if (source.teamId !== this.teamId) {
+            if (params.source !== this && source.teamId !== this.teamId) {
                 source.killedIds.push(this.matchDataId);
                 source.kills++;
 
@@ -2718,20 +2740,6 @@ export class Player extends BaseGameObject {
             killMsg.killCreditId = source.__id;
             killMsg.killerKills = source.kills;
         }
-        else if(this.hitBy != null && 
-            ((params.source instanceof Player && params.source !== this) || 
-            (params.damageType == (DamageType.Gas || DamageType.Airdrop || DamageType.Airstrike)))) {
-            const source = this.hitBy!;
-            this.killedBy = source;
-
-            source.killedIds.push(this.matchDataId);
-            source.kills++;
-
-            killMsg.killerId = source.__id;
-            killMsg.killCreditId = source.__id;
-            killMsg.killerKills = source.kills;
-        }
-       
 
         if (this.hasPerk("final_bugle")) {
             this.initLastBreath();
@@ -3026,6 +3034,7 @@ export class Player extends BaseGameObject {
     revive(playerToRevive: Player | undefined) {
         if (!playerToRevive) return;
 
+        playerToRevive.hitBy = undefined;
         this.playerBeingRevived = playerToRevive;
         if (this.downed && this.hasPerk("self_revive")) {
             this.doAction(

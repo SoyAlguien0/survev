@@ -1342,7 +1342,10 @@ export class Game {
                 killerName = helpers.htmlEscape(killerName);
                 killfeedKillerName = helpers.htmlEscape(killfeedKillerName);
                 // Display the kill / downed notification for the active player
-                if (msg.killCreditId == this.m_activeId) {
+                const trackKill = msg.killerId == this.m_activeId && msg.damageType == GameConfig.DamageType.Gas || 
+                                        msg.damageType == GameConfig.DamageType.Airdrop || 
+                                        msg.damageType == GameConfig.DamageType.Airstrike
+                if (msg.killCreditId == this.m_activeId || trackKill) {
                     const completeKill = msg.killerId == this.m_activeId;
                     const suicide =
                         msg.killerId == msg.targetId || msg.killCreditId == msg.targetId;
