@@ -1375,9 +1375,13 @@ img {
   text-overflow: ellipsis;
 }
 
-.ui-counters > p{
-  margin-left: 2px;
-  font-size: 12px;
+.ui-team-member-color {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  border-radius: 7px;
+  width: 14px;
+  height: 14px;
 }
 
 .ui-background-yellow {

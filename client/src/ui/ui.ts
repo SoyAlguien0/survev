@@ -468,7 +468,6 @@ export class UiManager {
                 }
             });
         }
-
         this.mapIndicatorBarn = new MapIndicatorBarn(this.mapSpriteBarn);
 
         this.container.mask = new PIXI.Graphics();
