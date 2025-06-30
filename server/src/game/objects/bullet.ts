@@ -606,6 +606,9 @@ export class Bullet {
                         dir: this.dir,
                         isExplosion: this.isShrapnel,
                     });
+                    if(col.player!.__id != this.player?.__id){
+                        col.player!.hitBy = this.player;
+                    }
                 }
                 hit = col.collidable;
             } else if (col.type == "pan") {

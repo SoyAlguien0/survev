@@ -1023,6 +1023,9 @@ export class WeaponManager {
                     source: this.player,
                     dir: hit.dir,
                 });
+                if(obj.__id != this.player?.__id){
+                    obj.hitBy = this.player;
+                }
             }
         }
     }

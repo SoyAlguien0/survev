@@ -23,6 +23,7 @@ import type { ThrowableDef } from "../../../../shared/defs/gameObjects/throwable
 import {
     type Action,
     type Anim,
+    DamageType,
     EmoteSlot,
     GameConfig,
     type HasteType,
@@ -48,6 +49,7 @@ import { BaseGameObject, type DamageParams, type GameObject } from "./gameObject
 import type { Loot } from "./loot";
 import type { MapIndicator } from "./mapIndicator";
 import type { Obstacle } from "./obstacle";
+import { Projectile } from "./projectile";
 import type { Structure } from "./structure";
 
 type GodMode = {
@@ -1472,6 +1474,7 @@ export class Player extends BaseGameObject {
                     this.applyActionFunc((target: Player) => {
                         if (!target.downed) return;
                         target.downed = false;
+                        target.hitBy = undefined;
                         target.downedDamageTicker = 0;
                         target.health = GameConfig.player.reviveHealth;
 
@@ -2626,8 +2629,18 @@ export class Player extends BaseGameObject {
         downedMsg.targetId = this.__id;
         downedMsg.downed = true;
 
-        if (params.source instanceof Player) {
+        if (this.hitBy != null && 
+        ((params.source instanceof Player && params.source === this) || 
+        [GameConfig.DamageType.Gas, GameConfig.DamageType.Airdrop, GameConfig.DamageType.Airstrike].includes(params.damageType))) {
+            const source = this.hitBy!;
+            this.downedBy = source;
+                
+            downedMsg.killerId = source.__id;
+            downedMsg.killCreditId = params.damageType == GameConfig.DamageType.Player? params.source!.__id : params.damageType;
+        }
+        else if (params.source instanceof Player) {
             this.downedBy = params.source;
+
             downedMsg.killerId = params.source.__id;
             downedMsg.killCreditId = params.source.__id;
         }
@@ -2640,6 +2653,7 @@ export class Player extends BaseGameObject {
         }
     }
 
+    hitBy: Player | undefined;
     killedBy: Player | undefined;
     killedIds: number[] = [];
 
@@ -2690,11 +2704,23 @@ export class Player extends BaseGameObject {
         killMsg.targetId = this.__id;
         killMsg.killed = true;
 
-        if (params.source instanceof Player) {
+        if (this.hitBy != null && 
+        ((params.source instanceof Player && params.source === this) || 
+        [GameConfig.DamageType.Gas, GameConfig.DamageType.Airdrop, GameConfig.DamageType.Airstrike].includes(params.damageType))) {
+            const source = this.hitBy!;
+            this.killedBy = source;
+                
+            source.killedIds.push(this.matchDataId);
+            source.kills++;
+            
+            killMsg.killerId = source.__id;
+            killMsg.killerKills = source.kills;
+            killMsg.killCreditId = params.damageType;
+
+        } else if (params.source instanceof Player) {
             const source = params.source;
             this.killedBy = source;
-
-            if (source !== this && source.teamId !== this.teamId) {
+            if (params.source !== this && source.teamId !== this.teamId) {
                 source.killedIds.push(this.matchDataId);
                 source.kills++;
 

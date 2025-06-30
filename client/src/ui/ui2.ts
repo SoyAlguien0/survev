@@ -1523,6 +1523,7 @@ export class UiManager2 {
         sourceType: string,
         damageType: DamageType,
         spectating: boolean,
+        trackKill: boolean,
     ) {
         const knockedOut = downed && !killed;
         const youTxt = spectating
@@ -1546,10 +1547,10 @@ export class UiManager2 {
         );
         const withTxt = this.localization.translate("game-with");
 
-        if (damageTxt && (completeKill || knockedOut)) {
+        if (damageTxt && (completeKill || knockedOut) && !trackKill) {
             return `${youTxt} ${killTxt} ${targetTxt} ${withTxt} ${damageTxt}`;
         }
-        return `${youTxt} ${killTxt} ${targetTxt}`;
+        return `${youTxt} ${killTxt} ${trackKill ? targetName : targetTxt}`;
     }
 
     getKillCountText(killCount: number) {
